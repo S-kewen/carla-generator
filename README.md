@@ -1,7 +1,7 @@
 # CARLA-GENERATOR
 This is a co-simulator for autonomous driving that can be used to generate KITTI-compatible and semantic3D-compatible datasets. If you want to realize real-time network simulation, please cooperate with our sub-module [NS3-DSRC](https://github.com/S-kewen/NS3-DSRC), [NS3-NR-C-V2X](https://github.com/S-kewen/NS3-NR-C-V2X).
 
-If you are interested in error concealment, please visit our [LiDAR Point Cloud Error Concealment System](https://github.com/S-kewen/lidar-base-point-cloud-error-concealment).
+If you are interested in error concealment, please visit our [LiDAR Point Cloud Error Concealment System](https://github.com/S-kewen/lidar-point-cloud-error-concealment).
 
 
 <div align=center>
