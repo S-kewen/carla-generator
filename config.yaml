@@ -1,0 +1,273 @@
+SIMULATOR:
+  SECTOR_SIZE: 180
+  LIMIT_FOV: True # labeling 90° point cloud frame or 360°
+  GROUND_REMOVAL:
+    VOXEL_SIZE: 0.1
+    RANSAC_N: 3
+    DISTANCE_THRESHOLD: 0.1
+    NUM_ITERATIONS: 1000
+
+NS3:
+  ENABLE: True
+  SYNC_TIME: 0.5
+  RECEIVER_ID: &RECEIVER_ID 7 # ns3 node id, start by 0, if use the unicast method, the receiver id must be set
+  SEND_STOP_SIGNAL: True
+  LU:
+    ENABLE: True
+    WIFI_MODE: OfdmRate27MbpsBW10MHz # http://louismannsysu.blogspot.com/2015/02/ns3-wifi-phy-data-rate-mode.html
+    CAST_METHOD: unicast # [broadcast, unicast]
+    PACKET_SIZE: 100 # bytes
+    TIME_OFFSET: -0.05
+  PU:
+    ENABLE: True
+    WIFI_MODE: OfdmRate27MbpsBW10MHz # http://louismannsysu.blogspot.com/2015/02/ns3-wifi-phy-data-rate-mode.html
+    CAST_METHOD: unicast # [broadcast, unicast]
+    PACKET_SIZE: 1206 # bytes
+    PACKET_MODE: 2 # 1: fixed size, 2: ground removal + compression
+  CR:
+    ENABLE: True
+    WIFI_MODE: OfdmRate27MbpsBW10MHz # http://louismannsysu.blogspot.com/2015/02/ns3-wifi-phy-data-rate-mode.html
+    CAST_METHOD: unicast # [broadcast, unicast]
+    PACKET_SIZE: 100 # bytes
+    TIME_OFFSET: 0.05
+
+ZMQ:
+  SEND_POSITION: tcp://127.0.0.1:5557
+  SEND_CP: tcp://127.0.0.1:5558
+  RECV_RESULT: tcp://127.0.0.1:5559
+
+CARLA_CONFIG:
+  FPS: 10
+  NUM_OF_VEHICLES: 100
+  NUM_OF_WALKERS: 0
+  VEHICLE:
+    BLUEPRINTS: Car
+    #https://carla.readthedocs.io/en/latest/bp_library/
+  SKIP_EMPTY: False
+  VEHICLE_SPAWN_POINT_DISTANCE: 5 # Filter the spawn points of near the agent vehicle
+  AGENT_VEHICLE_SPAWN_POINT_DISTANCE: &AGENT_VEHICLE_SPAWN_POINT_DISTANCE 30
+
+SAVE_CONFIG:
+  IS_SAVE:
+    CALIB: True
+    CARLA_LABEL: True
+    IMAGE_2: True
+    IMAGE_LABEL_2: True
+    LABEL_2: True
+    LOCATION: True
+    PLANES: True
+    PLY: True
+    SEMANTIC3D: True
+    VELODYNE: True
+    FG_LIDAR: True
+    VELODYNE_GROUND_REMOVAL: True
+    VELODYNE_COMPRESSION: True
+    PACKET: True
+  ROOT_PATH: output
+  STEP: 1
+
+FILTER_CONFIG:
+  PRELIMINARY_FILTER_DISTANCE: 120
+  MAX_RENDER_DEPTH_IN_METERS: 120
+  MIN_VISIBLE_VERTICES_FOR_RENDER: 2
+  MAX_OUT_VERTICES_FOR_RENDER: 6
+  MIN_BBOX_AREA_IN_PX: 100 #2D BBOX MUST MORE THAN THIS VALUE
+  MAX_OCCLUDED: 0.8
+  MIN_OBJECT_POINT_COUNT: 50
+  CATCH_ENVIRONMENT_OBJECT: False
+  CATCH_ACTOR: True
+  RGB:
+    ATTRIBUTE: {image_size_x: 1242, image_size_y: 375}
+  DEPTH_RGB:
+    ATTRIBUTE: {image_size_x: 1242, image_size_y: 375}
+  LIDAR:
+    TRANSFORM: {location: [0, 0, 1.6 ]}
+    ATTRIBUTE: {rotation_frequency: 10}
+
+
+BLUEPRINTS:
+  Car: ["vehicle.audi.a2","vehicle.audi.etron","vehicle.audi.tt","vehicle.bmw.grandtourer","vehicle.chevrolet.impala","vehicle.citroen.c3","vehicle.dodge.charger_2020","vehicle.dodge.charger_police","vehicle.ford.mustang","vehicle.jeep.wrangler_rubicon","vehicle.lincoln.mkz_2017","vehicle.lincoln.mkz_2020","vehicle.mercedes.coupe","vehicle.mercedes.coupe_2020","vehicle.mini.cooper_s","vehicle.mini.cooper_s_2021","vehicle.nissan.micra","vehicle.nissan.patrol","vehicle.nissan.patrol_2021","vehicle.seat.leon","vehicle.tesla.model3","vehicle.toyota.prius"]
+  Van: ["vehicle.carlamotors.carlacola","vehicle.ford.ambulance","vehicle.mercedes.sprinter","vehicle.volkswagen.t2"]
+  Truck: ["vehicle.carlamotors.firetruck","vehicle.tesla.cybertruck"]
+  Pedestrian: ["vehicle.bh.crossbike","vehicle.diamondback.century","vehicle.gazelle.omafiets","vehicle.harley-davidson.low_rider","vehicle.kawasaki.ninja","vehicle.vespa.zx125","vehicle.yamaha.yzf"]
+
+
+EDGE_SERVER_CONFIG:
+  EDGE_SERVER_1:
+    ID: *RECEIVER_ID # ns3 node id, start by 0
+    LOCATION: &EDGE_SERVER_LOCATION [-64, 20.33, 0.0] # [-94.92, 20.33, 0.005]
+    DSRC_WIFI_NODE:
+      ENABLE: False
+      WIDTH: 120
+      INTERAL: 20
+
+STATIONARY_VEHICLE_CONFIG:
+  V1:
+    ENABLE: True
+    TRANSFORM: {location: [-25.7, 13.3, 0.5], rotation: [0, 180, 0]}
+    BLUEPRINT: vehicle.lincoln.*
+
+AGENT_CONFIG:
+# Supports different ways to initialize the location of vehicle:
+  # TRANSFORM: {location: [-25.7, 13.3, 0.5], rotation: [0, 180, 0]} # Fixed spawn point, you can use manual_control.py to find the vehicle spawn point
+  # TRANSFORM: {random: [-23.50, 16.62, 0.5], distance: 30} # Randomly choose a spawn point based on origin location and radius
+  # TRANSFORM: random # Randomly select spawn point
+  training:
+    ENABLE: True
+    AUTOPILOT: True
+    TRANSFORM: {random: *EDGE_SERVER_LOCATION, distance: *AGENT_VEHICLE_SPAWN_POINT_DISTANCE}
+    BLUEPRINT: vehicle.lincoln.*
+    SENSOR_CONFIG: # !!!sensor order can't change!!!!
+      RGB:
+        TRANSFORM: {location: [0, 0, 1.6], rotation: [0, 0, 0]}
+        BLUEPRINT: sensor.camera.rgb
+        ATTRIBUTE: {image_size_x: 1242, image_size_y: 375, fov: 90}
+      DEPTH_RGB:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.camera.depth
+        ATTRIBUTE: {image_size_x: 1242, image_size_y: 375, fov: 90}
+      LIDAR:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.lidar.ray_cast
+        ATTRIBUTE: {range: 120, channels: 64, points_per_second: 1280000, rotation_frequency: 10,  upper_fov: 10.0, lower_fov: -16.8, atmosphere_attenuation_rate: 0.004, noise_stddev: 0.0, dropoff_general_rate: 0.028, dropoff_zero_intensity: 0.0, dropoff_intensity_limit: 0.0}
+      SEMANTIC_LIDAR:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.lidar.ray_cast_semantic
+        ATTRIBUTE: {range: 120, channels: 64, points_per_second: 1280000, rotation_frequency: 10,  upper_fov: 10.0, lower_fov: -16.8}
+  CAR2:
+    ENABLE: True
+    AUTOPILOT: True
+    TRANSFORM: {random: *EDGE_SERVER_LOCATION, distance: *AGENT_VEHICLE_SPAWN_POINT_DISTANCE}
+    BLUEPRINT: vehicle.lincoln.*
+    SENSOR_CONFIG:
+      RGB:
+        TRANSFORM: {location: [0, 0, 1.6], rotation: [0, 0, 0]}
+        BLUEPRINT: sensor.camera.rgb
+        ATTRIBUTE: {image_size_x: 1242, image_size_y: 375, fov: 90}
+      DEPTH_RGB:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.camera.depth
+        ATTRIBUTE: {image_size_x: 1242, image_size_y: 375, fov: 90}
+      LIDAR:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.lidar.ray_cast
+        ATTRIBUTE: {range: 120, channels: 64, points_per_second: 1280000, rotation_frequency: 10,  upper_fov: 10.0, lower_fov: -16.8, atmosphere_attenuation_rate: 0.004, noise_stddev: 0.0, dropoff_general_rate: 0.028, dropoff_zero_intensity: 0.0, dropoff_intensity_limit: 0.0}
+      SEMANTIC_LIDAR:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.lidar.ray_cast_semantic
+        ATTRIBUTE: {range: 120, channels: 64, points_per_second: 1280000, rotation_frequency: 10,  upper_fov: 10.0, lower_fov: -16.8}
+  CAR3:
+    ENABLE: True
+    AUTOPILOT: True
+    TRANSFORM: {random: *EDGE_SERVER_LOCATION, distance: *AGENT_VEHICLE_SPAWN_POINT_DISTANCE}
+    BLUEPRINT: vehicle.lincoln.*
+    SENSOR_CONFIG:
+      RGB:
+        TRANSFORM: {location: [0, 0, 1.6], rotation: [0, 0, 0]}
+        BLUEPRINT: sensor.camera.rgb
+        ATTRIBUTE: {image_size_x: 1242, image_size_y: 375, fov: 90}
+      DEPTH_RGB:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.camera.depth
+        ATTRIBUTE: {image_size_x: 1242, image_size_y: 375, fov: 90}
+      LIDAR:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.lidar.ray_cast
+        ATTRIBUTE: {range: 120, channels: 64, points_per_second: 1280000, rotation_frequency: 10,  upper_fov: 10.0, lower_fov: -16.8, atmosphere_attenuation_rate: 0.004, noise_stddev: 0.0, dropoff_general_rate: 0.028, dropoff_zero_intensity: 0.0, dropoff_intensity_limit: 0.0}
+      SEMANTIC_LIDAR:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.lidar.ray_cast_semantic
+        ATTRIBUTE: {range: 120, channels: 64, points_per_second: 1280000, rotation_frequency: 10,  upper_fov: 10.0, lower_fov: -16.8}
+  CAR4:
+    ENABLE: True
+    AUTOPILOT: True
+    TRANSFORM: {random: *EDGE_SERVER_LOCATION, distance: *AGENT_VEHICLE_SPAWN_POINT_DISTANCE}
+    BLUEPRINT: vehicle.lincoln.*
+    SENSOR_CONFIG:
+      RGB:
+        TRANSFORM: {location: [0, 0, 1.6], rotation: [0, 0, 0]}
+        BLUEPRINT: sensor.camera.rgb
+        ATTRIBUTE: {image_size_x: 1242, image_size_y: 375, fov: 90}
+      DEPTH_RGB:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.camera.depth
+        ATTRIBUTE: {image_size_x: 1242, image_size_y: 375, fov: 90}
+      LIDAR:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.lidar.ray_cast
+        ATTRIBUTE: {range: 120, channels: 64, points_per_second: 1280000, rotation_frequency: 10,  upper_fov: 10.0, lower_fov: -16.8, atmosphere_attenuation_rate: 0.004, noise_stddev: 0.0, dropoff_general_rate: 0.028, dropoff_zero_intensity: 0.0, dropoff_intensity_limit: 0.0}
+      SEMANTIC_LIDAR:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.lidar.ray_cast_semantic
+        ATTRIBUTE: {range: 120, channels: 64, points_per_second: 1280000, rotation_frequency: 10,  upper_fov: 10.0, lower_fov: -16.8}
+  CAR5:
+    ENABLE: True
+    AUTOPILOT: True
+    TRANSFORM: {random: *EDGE_SERVER_LOCATION, distance: *AGENT_VEHICLE_SPAWN_POINT_DISTANCE}
+    BLUEPRINT: vehicle.lincoln.*
+    SENSOR_CONFIG:
+      RGB:
+        TRANSFORM: {location: [0, 0, 1.6], rotation: [0, 0, 0]}
+        BLUEPRINT: sensor.camera.rgb
+        ATTRIBUTE: {image_size_x: 1242, image_size_y: 375, fov: 90}
+      DEPTH_RGB:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.camera.depth
+        ATTRIBUTE: {image_size_x: 1242, image_size_y: 375, fov: 90}
+      LIDAR:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.lidar.ray_cast
+        ATTRIBUTE: {range: 120, channels: 64, points_per_second: 1280000, rotation_frequency: 10,  upper_fov: 10.0, lower_fov: -16.8, atmosphere_attenuation_rate: 0.004, noise_stddev: 0.0, dropoff_general_rate: 0.028, dropoff_zero_intensity: 0.0, dropoff_intensity_limit: 0.0}
+      SEMANTIC_LIDAR:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.lidar.ray_cast_semantic
+        ATTRIBUTE: {range: 120, channels: 64, points_per_second: 1280000, rotation_frequency: 10,  upper_fov: 10.0, lower_fov: -16.8}
+  CAR6:
+    ENABLE: True
+    AUTOPILOT: True
+    TRANSFORM: {random: *EDGE_SERVER_LOCATION, distance: *AGENT_VEHICLE_SPAWN_POINT_DISTANCE}
+    BLUEPRINT: vehicle.lincoln.*
+    SENSOR_CONFIG:
+      RGB:
+        TRANSFORM: {location: [0, 0, 1.6], rotation: [0, 0, 0]}
+        BLUEPRINT: sensor.camera.rgb
+        ATTRIBUTE: {image_size_x: 1242, image_size_y: 375, fov: 90}
+      DEPTH_RGB:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.camera.depth
+        ATTRIBUTE: {image_size_x: 1242, image_size_y: 375, fov: 90}
+      LIDAR:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.lidar.ray_cast
+        ATTRIBUTE: {range: 120, channels: 64, points_per_second: 1280000, rotation_frequency: 10,  upper_fov: 10.0, lower_fov: -16.8, atmosphere_attenuation_rate: 0.004, noise_stddev: 0.0, dropoff_general_rate: 0.028, dropoff_zero_intensity: 0.0, dropoff_intensity_limit: 0.0}
+      SEMANTIC_LIDAR:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.lidar.ray_cast_semantic
+        ATTRIBUTE: {range: 120, channels: 64, points_per_second: 1280000, rotation_frequency: 10,  upper_fov: 10.0, lower_fov: -16.8}
+  CAR7:
+    ENABLE: True
+    AUTOPILOT: True
+    TRANSFORM: {random: *EDGE_SERVER_LOCATION, distance: *AGENT_VEHICLE_SPAWN_POINT_DISTANCE}
+    BLUEPRINT: vehicle.lincoln.*
+    SENSOR_CONFIG:
+      RGB:
+        TRANSFORM: {location: [0, 0, 1.6], rotation: [0, 0, 0]}
+        BLUEPRINT: sensor.camera.rgb
+        ATTRIBUTE: {image_size_x: 1242, image_size_y: 375, fov: 90}
+      DEPTH_RGB:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.camera.depth
+        ATTRIBUTE: {image_size_x: 1242, image_size_y: 375, fov: 90}
+      LIDAR:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.lidar.ray_cast
+        ATTRIBUTE: {range: 120, channels: 64, points_per_second: 1280000, rotation_frequency: 10,  upper_fov: 10.0, lower_fov: -16.8, atmosphere_attenuation_rate: 0.004, noise_stddev: 0.0, dropoff_general_rate: 0.028, dropoff_zero_intensity: 0.0, dropoff_intensity_limit: 0.0}
+      SEMANTIC_LIDAR:
+        TRANSFORM: {location: [ 0, 0, 1.6 ], rotation: [ 0, 0, 0 ]}
+        BLUEPRINT: sensor.lidar.ray_cast_semantic
+        ATTRIBUTE: {range: 120, channels: 64, points_per_second: 1280000, rotation_frequency: 10,  upper_fov: 10.0, lower_fov: -16.8}
+  STATIC_VEHICLE_1: # static vehicle and does not capture sensor data
+    ENABLE: True
+    AUTOPILOT: False
+    TRANSFORM: {location: [-41.7, 43.5, 0.5], rotation: [0, 0, -90]}
+    BLUEPRINT: vehicle.carlamotors.firetruck

@@ -1,0 +1,72 @@
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+rss/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+*.ply
+*.pcap
+*.jpg
+*.npy
+*.bin
+*.png
+*.jpg
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### PointRCNN ###
+*__pycache__*
+*_ext*
+PointRCNN/output
+*.cu.o
+PointRCNN/data
+**/build
+**/*.egg-info
+**/dist
+PointRCNN/tools/gt_database/
+
+### PointNet2 ###
+PointRCNN/pointnet2/build/
+PointRCNN/pointnet2/dist/
+PointRCNN/pointnet2/pointnet2.egg-info/
+PointRCNN/pointnet2_lib/tools/output
+
+### kitti_generator ###
+kitti_generator/data
+kitti_generator/output
+
+### ShapeMeasure ###
+ShapeMeasure/build
+ShapeMeasure/dist
+ShapeMeasure/PyTorch_metric.egg-info
+
+### CARLA ###
+WindowsNoEditor/
+output/
+CARLA_*.zip
